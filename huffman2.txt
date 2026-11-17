@@ -1,0 +1,97 @@
+/*
+ * Problem Statement: Write a program to implement Huffman Encoding using a greedy strategy.
+ */
+
+#include <iostream>
+#include <queue>
+#include <unordered_map>
+#include <vector>
+
+using namespace std;
+
+// Node structure for Huffman Tree
+struct Node {
+    char ch;
+    int freq;
+    Node *left, *right;
+    Node(char c, int f) : ch(c), freq(f), left(nullptr), right(nullptr) {}
+};
+
+// Comparator for priority queue (min-heap based on frequency)
+struct Compare {
+    bool operator()(Node* a, Node* b) {
+        return a->freq > b->freq;
+    }
+};
+
+// Recursive function to generate Huffman codes
+void makeCodes(Node* root, string code, unordered_map<char, string>& codes) {
+    if (!root) return;
+    // Leaf node: store code (handles single-character edge case with "0")
+    if (!root->left && !root->right) {
+        codes[root->ch] = code.empty() ? "0" : code;
+    }
+    makeCodes(root->left, code + "0", codes);
+    makeCodes(root->right, code + "1", codes);
+}
+
+// Free allocated memory to prevent memory leaks
+void freeTree(Node* n) {
+    if (n) {
+        freeTree(n->left);
+        freeTree(n->right);
+        delete n;
+    }
+}
+
+int main() {
+    string s;
+    cout << "Enter text: ";
+    getline(cin, s);
+
+    if (s.empty()) {
+        cout << "Empty input.\n";
+        return 0;
+    }
+
+    // Step 1: Count frequency of each character
+    unordered_map<char, int> freq;
+    for (char c : s) freq[c]++;
+
+    // Step 2: Build min-heap priority queue for greedy approach
+    priority_queue<Node*, vector<Node*>, Compare> pq;
+    for (auto [c, f] : freq) {
+        pq.push(new Node(c, f));
+    }
+
+    // Step 3: Combine nodes until one tree remains
+    while (pq.size() > 1) {
+        Node *a = pq.top(); pq.pop();
+        Node *b = pq.top(); pq.pop();
+        // Internal node with combined frequency
+        Node *p = new Node('\0', a->freq + b->freq);
+        p->left = a;
+        p->right = b;
+        pq.push(p);
+    }
+
+    Node* root = pq.top();
+    unordered_map<char, string> codes;
+    makeCodes(root, "", codes);
+
+    // Step 4: Display codes and encoded text
+    cout << "\nHuffman Codes:\n";
+    for (auto [c, code] : codes) {
+        cout << "  '" << c << "' : " << code << '\n';
+    }
+
+    cout << "Encoded text: ";
+    for (char c : s) {
+        cout << codes[c];
+    }
+    cout << '\n';
+
+    // Cleanup dynamic memory
+    freeTree(root);
+    return 0;
+}

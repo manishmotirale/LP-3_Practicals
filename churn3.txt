@@ -1,0 +1,59 @@
+# Problem Statement: Given a bank customer, build a neural network-based 
+# classifier that can determine whether they will leave or not in the next 6 months.
+
+import os
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import accuracy_score, classification_report
+
+# --- Step 1: Load and Validate Dataset ---
+path = "bank.csv"
+if not os.path.exists(path):
+    raise FileNotFoundError(f"Error: '{path}' not found. Please ensure bank.csv is in the working directory.")
+
+df = pd.read_csv(path)
+
+# Automatically detect target column ('Exited', 'churn', or last column)
+target = "Exited" if "Exited" in df.columns else ("churn" if "churn" in df.columns else df.columns[-1])
+y = df[target]
+X = df.drop(columns=[target])
+
+# --- Step 2: Pre-process Dataset (Numeric & Categorical Features) ---
+numeric = X.select_dtypes(include=np.number).columns.tolist()
+categorical = [c for c in X.columns if c not in numeric]
+
+prep = ColumnTransformer([
+    ("num", make_pipeline(SimpleImputer(strategy="median"), StandardScaler()), numeric),
+    ("cat", make_pipeline(SimpleImputer(strategy="most_frequent"), OneHotEncoder(handle_unknown="ignore")), categorical)
+])
+
+# --- Step 3: Build MLP Neural Network Classifier Pipeline ---
+model = make_pipeline(
+    prep,
+    MLPClassifier(
+        hidden_layer_sizes=(32, 16), 
+        max_iter=600, 
+        random_state=42, 
+        early_stopping=True
+    )
+)
+
+# --- Step 4: Split Data into Train and Test Sets ---
+Xtr, Xte, ytr, yte = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+# --- Step 5: Train and Evaluate the Model ---
+model.fit(Xtr, ytr)
+pred = model.predict(Xte)
+
+print("--- Bank Customer Churn Prediction (MLP Classifier) ---")
+print(f"Accuracy: {accuracy_score(yte, pred):.4f}\n")
+print("Classification Report:")
+print(classification_report(yte, pred, zero_division=0))

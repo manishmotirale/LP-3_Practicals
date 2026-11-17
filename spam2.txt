@@ -1,0 +1,79 @@
+/*
+ * Problem Statement: Email classification: Normal (ham) vs Spam using 
+ * Naive Bayes, KNN, and SVM models.
+ */
+
+import os
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.pipeline import make_pipeline
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import LinearSVC
+from sklearn.metrics import classification_report, accuracy_score
+
+# --- Step 1: Load and Validate Dataset ---
+path = "emails.csv"
+if not os.path.exists(path):
+    raise FileNotFoundError(f"Error: '{path}' not found. Please ensure emails.csv is in the working directory.")
+
+df = pd.read_csv(path)
+
+# Drop missing values to prevent invalid inputs
+df = df.dropna()
+
+# Support both Kaggle word-count schema (Email No./Prediction) and raw text schema (text/label)
+if "Prediction" in df.columns:
+    # Dataset has pre-extracted word counts: map target to strings
+    feature_cols = [col for col in df.columns if col not in ["Email No.", "Prediction"]]
+    X = df[feature_cols]
+    y = df["Prediction"].astype(str).map({"0": "ham", "1": "spam"})
+    use_vectorizer = False
+elif "text" in df.columns and "label" in df.columns:
+    # Dataset has raw email text
+    X = df["text"].astype(str)
+    y = df["label"].astype(str).str.lower().str.strip()
+    use_vectorizer = True
+else:
+    raise ValueError("Error: Dataset must contain ('text' and 'label') or 'Prediction' columns.")
+
+# --- Step 2: Split Dataset into Training and Testing Sets ---
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=42, stratify=y
+)
+
+# --- Step 3: Define Models ---
+if use_vectorizer:
+    models = {
+        "Naive Bayes": make_pipeline(
+            TfidfVectorizer(stop_words='english'), 
+            MultinomialNB()
+        ),
+        "K-Nearest Neighbors": make_pipeline(
+            TfidfVectorizer(stop_words='english'), 
+            KNeighborsClassifier(n_neighbors=3)
+        ),
+        "Support Vector Machine": make_pipeline(
+            TfidfVectorizer(stop_words='english'), 
+            LinearSVC(random_state=42)
+        )
+    }
+else:
+    models = {
+        "Naive Bayes": MultinomialNB(),
+        "K-Nearest Neighbors": KNeighborsClassifier(n_neighbors=3),
+        "Support Vector Machine": LinearSVC(random_state=42)
+    }
+
+# --- Step 4: Train and Evaluate Models ---
+print("--- Email Classification Performance Report ---\n")
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    pred = model.predict(X_test)
+    
+    print(f"Model: {name}")
+    print(f"  - Accuracy: {accuracy_score(y_test, pred):.4f}")
+    print("Classification Report:")
+    print(classification_report(y_test, pred, zero_division=0))
+    print("-" * 55)

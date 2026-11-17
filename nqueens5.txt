@@ -1,0 +1,64 @@
+/*
+ * Problem Statement: Design n-Queens matrix having first Queen placed. 
+ * Use backtracking to place remaining Queens to generate the final n-Queen's matrix.
+ */
+
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+int n;
+int solutions = 0;
+
+// Check if placing a queen at (row, col) is safe
+bool safe(const vector<int>& q, int row, int col) {
+    for (int r = 0; r < row; r++) {
+        // Check column conflict and diagonal conflict
+        if (q[r] == col || abs(q[r] - col) == abs(r - row)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Backtracking function to place queens row by row
+void place(vector<int>& q, int row) {
+    if (row == n) {
+        solutions++;
+        cout << "Solution " << solutions << ":\n";
+        for (int r = 0; r < n; r++) {
+            for (int c = 0; c < n; c++) {
+                cout << (q[r] == c ? "Q " : " . ");
+            }
+            cout << '\n';
+        }
+        cout << '\n';
+        return;
+    }
+
+    // Try placing queen in each column for the current row
+    for (int c = 0; c < n; c++) {
+        if (safe(q, row, c)) {
+            q[row] = c;
+            place(q, row + 1);
+        }
+    }
+}
+
+int main() {
+    cout << "Enter N (1 to 15): ";
+    cin >> n;
+
+    if (n < 1 || n > 15) {
+        cout << "Error: Invalid N. Please enter a value between 1 and 15.\n";
+        return 1;
+    }
+
+    vector<int> q(n, -1);
+    place(q, 0);
+
+    cout << "Total solutions = " << solutions << '\n';
+    return 0;
+}

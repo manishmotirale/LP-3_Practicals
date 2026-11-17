@@ -1,0 +1,63 @@
+/*
+ * Problem Statement: Write a program to solve a fractional Knapsack problem using a greedy method.
+ */
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <iomanip>
+
+using namespace std;
+
+// Structure to store item details
+struct Item {
+    double value, weight, ratio;
+};
+
+int main() {
+    int n;
+    double capacity;
+
+    cout << "Number of items: ";
+    cin >> n;
+
+    vector<Item> a(n);
+    for (int i = 0; i < n; i++) {
+        cout << "Value and weight of item " << i + 1 << ": ";
+        cin >> a[i].value >> a[i].weight;
+        
+        if (a[i].weight <= 0) {
+            cout << "Error: Weight must be positive.\n";
+            return 1;
+        }
+        // Compute value-to-weight ratio for greedy choice
+        a[i].ratio = a[i].value / a[i].weight;
+    }
+
+    cout << "Knapsack capacity: ";
+    cin >> capacity;
+
+    // Step 1: Sort items in descending order of value-to-weight ratio (Greedy approach)
+    sort(a.begin(), a.end(), [](const Item& x, const Item& y) {
+        return x.ratio > y.ratio;
+    });
+
+    double totalValue = 0;
+    cout << "\nAllocation Details:\n";
+
+    // Step 2: Greedily pick items or fractions of items
+    for (auto& x : a) {
+        if (capacity <= 0) break;
+
+        double take = min(capacity, x.weight);
+        totalValue += take * x.ratio;
+        capacity -= take;
+
+        cout << "  - Taken weight: " << take << ", value: " << take * x.ratio << '\n';
+    }
+
+    // Step 3: Output maximum total value
+    cout << fixed << setprecision(2) << "\nMaximum value = " << totalValue << '\n';
+
+    return 0;
+}

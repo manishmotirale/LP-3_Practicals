@@ -1,0 +1,32 @@
+/*
+ * Problem Statement: Implement Gradient Descent Algorithm to find the local minima of a function.
+ */
+
+# Define the function f(x) = x^2 + 4x + 5
+def f(x):
+    return x * x + 4 * x + 5
+
+# Define the derivative of the function: f'(x) = 2x + 4
+def derivative(x):
+    return 2 * x + 4
+
+def main():
+    # User inputs for gradient descent parameters
+    x = float(input("Enter initial x: "))
+    learning_rate = float(input("Enter learning rate (e.g., 0.1): "))
+    iterations = int(input("Enter number of iterations: "))
+
+    print("\n--- Running Gradient Descent ---")
+    for i in range(iterations):
+        # Gradient descent update rule: x = x - alpha * f'(x)
+        x -= learning_rate * derivative(x)
+        
+        # Print progress periodically
+        if i % max(1, iterations // 10) == 0:
+            print(f"Iteration {i + 1}: x = {x:.6f}, f(x) = {f(x):.6f}")
+
+    print("\n--- Optimization Complete ---")
+    print(f"Approximate local minimum found at: x = {x:.6f}, f(x) = {f(x):.6f}")
+
+if __name__ == "__main__":
+    main()
